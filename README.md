@@ -1,37 +1,76 @@
 # CoreDataStack
 CoreDataStack in Swift
-### To insert new row
-To create new object use the method `createObject(in: )` as follows:
+
+
+## Repository Usage:
+### Create repository:
+To create a `Repository` Object:
 
 ```swift
-let user: User? = CoreDataStack.shared.createObject(in: CoreDataStack.shared.mainContext)
-user?.name = "Test Name"
-
-CoreDataStack.shared.saveMainContext()
+let repository = Repository<User>()
 ```
+Here `User` is a subclass of `NSManagedObject`.
+
+### To insert new row
+To create new object use the method `create(in:with:)` as follows:
+
+```swift
+let user: User = repository.create { (user) in
+    user.id = 2
+    user.name = "Test User"
+}
+```
+By default `Repository` class use `writeContext` of `CoreDataStack`, alternatively you can pass your own context. Like:
+
+```swift
+let user: User = repository.create(in: CoreDataStack.shared.mainContext) { (user) in
+    user.id = 2
+    user.name = "Test User"
+}
+```
+
 ### To fetch data from an Entity
-To fetch the data use the method `fetchObjects(in: )` or `fetchObjects(with: , in: )`.
+To fetch the data use the method `fetch(with:in:)`.
 
 #### Fetching all results:
 ```swift
-let users: [User]? = CoreDataStack.shared.fetchObjects(in: CoreDataStack.shared.mainContext)
+let users: [User] = try repository.fetch()
 ```
 #### Fetching with predicate:
 ```swift
-let users: [User]? = CoreDataStack.shared.fetchObjects(with: "name like '*3'", in: CoreDataStack.shared.mainContext)
+let predicate = NSPredicate(format: "name like '*3'")
+let users: [User] = try repository.fetch(with: predicate)
 ```
 
 ### To delete object from Entity:
-To delete the rows from an entity use `delete(object: , in: )` or `delete(in: , with: , in: )` methods.
+To delete the rows from an entity use `delete(entity:in:)` or `delete(entities:in:)` or `delete(in:with:in: )` methods.
 
 #### Delete single object:
 ```swift
-CoreDataStack.shared.delete(object: object, in: CoreDataStack.shared.mainContext)
+repository.delete(entity: object)
 ```
+or
+```swift
+repository.delete(entity: object, in: CoreDataStack.shared.mainContext)
+```
+#### Delete multiple objects:
+```swift
+repository.delete(entities: objects)
+```
+or
+```swift
+repository.delete(entities: objects, in: CoreDataStack.shared.mainContext)
+```
+
 #### Delete multiple objects with predicate:
 Here you have to pass the Type of Entity from which you want to delete data.
 ```swift
-CoreDataStack.shared.delete(in: User.self, with: "name like '*3'", in: CoreDataStack.shared.mainContext)
+let predicate = NSPredicate(format: "name like '*3'")
+try repository.delete(in: User.self, with: predicate)
 ```
-### Working on background threads
-The above examples uses the mainContext provided by CoreDataStack. This context is for main thread, if you wish to access data on any different thread then use the getTemporaryContext() method. The context provided by this method can be used with all the methods in CoreDataStack.
+or
+
+```swift
+let predicate = NSPredicate(format: "name like '*3'")
+try repository.delete(in: User.self, with: predicate, in: CoreDataStack.shared.mainContext)
+```
